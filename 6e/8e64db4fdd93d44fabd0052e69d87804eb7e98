@@ -1,0 +1,33 @@
+AGENTS.md
+  s_abee45ac21475a::t_b09db947843ece 1-30
+CLAUDE.md
+  s_abee45ac21475a::t_073813871fba47 1
+LICENSE
+  s_abee45ac21475a::t_3a1e9b05b5580d 1-202
+README.md
+  s_abee45ac21475a::t_20d005c1148458 1-46
+docs/04-plan.md
+  s_abee45ac21475a::t_4fec48422c88d4 1-167
+docs/01-context.md
+  s_abee45ac21475a::t_187c686816183e 1-86
+docs/02-research.md
+  s_abee45ac21475a::t_53ad43f9a9087c 1-116
+docs/03-decisions.md
+  s_abee45ac21475a::t_f4c0328740759f 1-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6e8e64db4fdd93d44fabd0052e69d87804eb7e98",
+  "prompts": {},
+  "sessions": {
+    "s_abee45ac21475a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5cce8165-f221-4671-8c3a-a6bf29da7296",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Rishit Sharma <rishitsharmar89@gmail.com>"
+    }
+  }
+}
