@@ -40,18 +40,23 @@ naming pattern is used.
 
 ## Run sequence
 
-1. **Validate** flags, files, weights and that the runner binary exists. On any error: print why, exit
+1. **Remove stale outputs** (`reward.json`, `reward.txt`, `metrics.json`, `junit/` in `--out`), so no error
+   path can leave an old reward behind.
+2. **Validate** flags, files, weights and that the runner binary exists. On any error: print why, exit
    non-zero, write **no** reward (D7: authoring/infrastructure error, not a bad submission).
-2. **Fail closed**: delete stale `reward.json`/`reward.txt`/`junit/`, then write `{"reward": 0}`. If the
-   grader dies later, the trial still reads 0.
-3. **Place tests**: copy `--tests` into `<app>/__grader__/`, so hidden tests import app code as
-   `../src/x.ts`. (Hardening may change where things run; see below.)
-4. **Run each file** with the adapter command in its own process group, with a clean environment and the
-   timeout. On timeout, kill the whole group.
-5. **Parse** `<out>/junit/<file>.xml` if it exists: root totals plus the names of failing test cases.
-   A missing XML means load failure or timeout, so that file scores 0.
-6. **Score**, write `metrics.json`, then overwrite `reward.json`. Print a short summary to stderr. Exit 0.
-7. **Clean up** `<app>/__grader__/`.
+3. **Fail closed**: write `{"reward": 0}`. If the grader dies later, the trial still reads 0. Any error the
+   grader detects from here on removes it again and exits non-zero (D7).
+4. **Place tests**: copy `--tests` into `<app>/__grader__/` (replacing any existing one), so hidden tests
+   import app code as `../src/x.ts`. (Hardening may change where things run; see below.)
+5. **Run each file** with the adapter command from `<app>`, in its own process group, with the timeout. On
+   timeout, kill the whole group; after a normal exit, kill anything the file left running in the group.
+   The environment is inherited in M1; the minimal allowlisted environment is T2 (M2).
+6. **Parse** `<out>/junit/<file>.xml` if it exists: root totals plus the names of failing test cases.
+   A missing or unusable XML (malformed, or totals that don't add up) means a load failure, crash, early
+   exit, timeout or zero tests, so that file scores 0.
+7. **Score**, write `metrics.json`, then overwrite `reward.json` (each via temp file and rename). Print a short
+   summary to stderr. Exit 0.
+8. **Clean up** `<app>/__grader__/`.
 
 ## Scoring rules
 
@@ -59,7 +64,8 @@ naming pattern is used.
 - `fraction = passed / tests`, or 0 if `tests == 0`. A file with zero tests never counts as passing.
 - A file **fully passes** when `tests > 0` and `passed == tests`.
 - `binary`: reward `1` only if every file fully passes, else `0`.
-- `partial`: reward = Σ weight × fraction, rounded to 4 decimals.
+- `partial`: reward = Σ weight × fraction, rounded to 4 decimals, and capped at `0.9999` unless every file
+  fully passes, so rounding can never turn a failure into a pass (Harbor passes at `reward >= 1`).
 
 ## Outputs
 
@@ -81,12 +87,17 @@ In `--mode partial`: `{"reward": 0.3, "div.test.ts": 0, "mul.test.ts": 0.5}`.
   "runner": {"name": "bun", "path": "/usr/local/bin/bun", "version": "1.3.11", "sha256": "..."},
   "files": {
     "div.test.ts": {"weight": 0.4, "tests": 0, "passed": 0, "failed": 0, "skipped": 0,
-                    "load_failed": true, "timed_out": false, "seconds": 0.21, "failing": []},
+                    "load_failed": true, "timed_out": false, "exit_code": 1, "seconds": 0.21, "failing": []},
     "mul.test.ts": {"weight": 0.6, "tests": 2, "passed": 1, "failed": 1, "skipped": 0,
-                    "load_failed": false, "timed_out": false, "seconds": 0.34, "failing": ["3 * 3"]}
+                    "load_failed": false, "timed_out": false, "exit_code": 1, "seconds": 0.34,
+                    "failing": ["mul > 3 * 3"]}
   }
 }
 ```
+
+`load_failed` means the file produced no usable report: an import failure, a crash, an early exit, or (with
+`exit_code` 0) a file with zero tests. A malformed report also sets `error`. Failing tests are named by their
+`describe` path joined with ` > `.
 
 `junit/<file>.xml`: each raw report, kept for humans.
 
@@ -137,12 +148,19 @@ Harbor task in `examples/`:
 
 Run the full suite twice from a clean checkout; both runs must pass.
 
+M1 rows are scripted in `scripts/verify.sh`: Go unit tests (JUnit parsing on a captured Bun report, scoring,
+weights, process-group kill), then the matrix inside `oven/bun:1.3.14` with the example task laid out as
+Harbor runs it (`/app`, `/tests`, `/logs/verifier`). The null and oracle cases run the task's own
+`tests/test.sh`.
+
 ## Repo layout (target)
 
 ```
 cmd/grade/main.go        # flag parsing and exit codes only
-internal/grade/          # run.go (exec, timeout, process group), junit.go, score.go, runners.go
+internal/grade/          # grade.go (validate, place tests, bun adapter), run.go (exec, timeout, process
+                         # group), junit.go, score.go
 examples/bun-basic/      # a Harbor task: environment/, solution/, tests/
+scripts/verify.sh        # unit tests + build + the verification matrix in Docker
 testdata/malicious/      # one fixture per threat
 docs/                    # these files
 ```
@@ -154,11 +172,41 @@ Standard library only. Ask before adding any dependency.
 | | Scope | Done when |
 |---|---|---|
 | M0 | Research, decisions, plan (this repo) | Done |
-| M1 | Bun MVP: CLI, bun adapter, binary + partial modes, `metrics.json`, fail-loud validation, timeout, example task | Verification matrix passes in `oven/bun`, plus a real Harbor oracle/nop run |
+| M1 | Bun MVP: CLI, bun adapter, binary + partial modes, `metrics.json`, fail-loud validation, timeout, example task | Verification matrix passes in `oven/bun`, plus a real Harbor oracle/nop run. Done: matrix passes in `oven/bun:1.3.14` (arm64 and amd64); `harbor run` (Harbor 0.24.0, docker, arm64) gives oracle 1.0, nop 0 |
 | M2 | Bun hardening T1–T8 and a README threat model | Every malicious fixture behaves as documented |
 | M3 | Release: binaries for linux amd64/arm64 (+ darwin for local dev), copy-paste `test.sh` snippets | Ask the owner before creating a release |
 | M4 | pytest, vitest and generic `--cmd` (only when a task needs them) | Matrix passes in each runner's image |
 | Later | jest, go, nextest, deno, node:test; CTRF input; Rewardkit criterion | As needed |
+
+## M1 results (2026-10-16)
+
+**Shipped** (branch `m1-bun-mvp`): the `grade` CLI with the `bun` adapter, `binary` and `partial` modes,
+`reward.json` + `metrics.json` + `junit/`, fail-loud validation (D7), fail-closed reward, per-file timeout with
+a process-group kill, the `examples/bun-basic` Harbor task, and `scripts/verify.sh`. Go standard library only.
+Small choices the plan text didn't spell out are folded into the sections above: stale outputs removed first,
+partial reward capped at 0.9999, inconsistent JUnit totals treated as unusable, the group killed after every
+file, `exit_code` in `metrics.json`.
+
+**Verified:**
+
+- `go vet` and `go test ./...` (JUnit parsing on a captured Bun report, scoring, weights, process-group kill).
+- The 23-check matrix in `oven/bun:1.3.14` on linux/arm64 and linux/amd64 (emulated), then twice more from
+  clean clones. A mutation check (killing only the group leader) fails both the unit test and the Docker check.
+- First real Harbor run, after `scripts/verify.sh` built the binaries. Harbor 0.24.0, `docker` environment,
+  arm64 host, so `grade-aarch64` ran:
+
+| Command | Reward | Verifier output |
+|---|---|---|
+| `harbor run -p examples/bun-basic -a oracle` | **1** | mean 2/2, median 4/4; 0 exceptions; verifier step 0.3 s, trial 6 s |
+| `harbor run -p examples/bun-basic -a nop` | **0** | mean 1/2 (empty input returns NaN), median `load_failed` (export missing); weighted fraction 0.25 |
+
+No fixes were needed for the Harbor run: Harbor accepted `task.toml` (schema 1.4), `tests/test.sh` and the
+binaries as they were. Harbor facts confirmed by the run are in
+[02-research.md](02-research.md#harbor-0240-real-run-2026-10-16).
+
+**Carried to M2:** hardening T1–T8 (nothing above defends against a hostile agent yet); whether Harbor accepts
+the extra per-file keys in a partial-mode `reward.json` (only binary mode has run under Harbor); `__grader__/`
+sits in the agent-writable app directory (T1).
 
 ## Open questions
 

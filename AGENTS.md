@@ -4,8 +4,9 @@ Instructions for coding agents (Claude Code, Codex, Cursor, ...) working in this
 
 ## Start here
 
-Read, in order: `README.md`, `docs/01-context.md`, `docs/02-research.md`, `docs/03-decisions.md`,
-`docs/04-plan.md`. The current milestone is the first one in `docs/04-plan.md` that isn't marked done.
+Read, in order: `handover.md` (current state and next steps), `README.md`, `docs/01-context.md`,
+`docs/02-research.md`, `docs/03-decisions.md`, `docs/04-plan.md`. The current milestone is the first one in
+`docs/04-plan.md` that isn't marked done. Update `handover.md` before you stop.
 
 ## Rules
 
