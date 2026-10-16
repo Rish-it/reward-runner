@@ -84,20 +84,37 @@ Interpretation: thousands of task authors, not millions. Niche, but growing.
 
 ## Verified technical facts
 
-Probed locally with Bun 1.3.14 (not yet re-verified inside the `oven/bun` Docker image):
+First probed locally with Bun 1.3.14, then **re-verified 2026-10-16 inside the `oven/bun:1.3.14` Docker image**
+(Debian 13, `bun --version` = 1.3.14, both linux/arm64 and linux/amd64). Each fact below held there:
 
 - `bun test /abs/path/x.test.ts --reporter=junit --reporter-outfile=out.xml` writes a root
   `<testsuites name="bun test" tests=".." failures=".." skipped="..">`. Nested `<testsuite>` elements (one per
   file, one per `describe`) repeat subsets of the same counts. Read the root only.
-- `skipped` counts both `test.skip` and `test.todo`. No `errors` attribute is emitted.
-- A test file that fails to import (missing export) produces **no XML file** and exit code 1.
+- `skipped` counts both `test.skip` (`<skipped />`) and `test.todo` (`<skipped message="TODO" />`). No `errors`
+  attribute is emitted.
+- A test file that fails to import (missing export) produces **no XML file** and exit code 1. So does a file
+  that throws at the top level after registering tests.
 - A failing `<testcase>` contains `<failure type="AssertionError" />`. That's enough to list failing test names.
-- A bare file name is treated as a filter by `bun test`; pass an absolute or `./`-prefixed path.
-- Killing a hung `bun test` with a timeout works (SIGTERM); the run leaves no XML.
-- Copying hidden tests into `<app>/__grader__/` makes `import ... from "../index.ts"` resolve against the app.
+  The `classname` attribute is not usable: it is double-escaped and reversed (`inner &amp;gt; outer` for
+  `describe("outer") > describe("inner")`), so failing names are built from the nested suite names instead.
+- A bare file name is treated as a filter by `bun test`; pass an absolute or `./`-prefixed path. An explicit
+  absolute path runs even if the name doesn't match Bun's `*.test.*` / `*.spec.*` pattern.
+- Killing a hung `bun test` with a timeout works (SIGTERM, and SIGKILL to the process group); the run leaves
+  no XML.
+- Copying hidden tests into `<app>/__grader__/` makes `import ... from "../src/x.ts"` resolve against the app.
 
-These were validated by a throwaway TypeScript prototype (deleted). Harbor facts come from
-`src/harbor/verifier/verifier.py` and the Harbor docs.
+New in the Docker re-check:
+
+- A test file with **zero tests** exits **0** and writes **no XML** (same output as a load failure, but exit 0).
+- `process.exit(0)` inside a test exits 0 and writes **no XML**, so it can't fake a partial pass.
+- An unhandled promise rejection during a test is reported as a failure in the XML.
+- An async test that never resolves fails after Bun's own 5 s per-test timeout, and the XML is written. A
+  synchronous infinite loop blocks Bun's timer and needs the grader's per-file kill.
+- A `setTimeout` that throws after the last test did not change the result (exit 0, all passed).
+
+The first pass was a throwaway TypeScript prototype (deleted); the Docker re-check is scripted in
+`scripts/verify.sh` (matrix) plus one-off probes. Harbor facts come from `src/harbor/verifier/verifier.py`
+and the Harbor docs.
 
 ## Corrections log
 

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="bun test" tests="6" assertions="4" failures="1" skipped="2" time="0.008349875">
+  <testsuite name="__grader__/mixed.test.ts" file="__grader__/mixed.test.ts" tests="6" assertions="4" failures="1" skipped="2" time="0" hostname="5f739df44272">
+    <testsuite name="outer" file="__grader__/mixed.test.ts" line="3" tests="5" assertions="3" failures="1" skipped="2" time="0" hostname="5f739df44272">
+      <testsuite name="inner" file="__grader__/mixed.test.ts" line="4" tests="2" assertions="2" failures="1" skipped="0" time="0" hostname="5f739df44272">
+        <testcase name="add 1+1" classname="inner &amp;gt; outer" time="0.000026" file="__grader__/mixed.test.ts" line="5" assertions="1" />
+        <testcase name="mul 3*3" classname="inner &amp;gt; outer" time="0.000055" file="__grader__/mixed.test.ts" line="6" assertions="1">
+          <failure type="AssertionError" />
+        </testcase>
+      </testsuite>
+      <testcase name="add 2+2" classname="outer" time="0.000008" file="__grader__/mixed.test.ts" line="8" assertions="1" />
+      <testcase name="skipped one" classname="outer" time="0" file="__grader__/mixed.test.ts" line="9" assertions="0">
+        <skipped />
+      </testcase>
+      <testcase name="todo one" classname="outer" time="0" file="__grader__/mixed.test.ts" line="10" assertions="0">
+        <skipped message="TODO" />
+      </testcase>
+    </testsuite>
+    <testcase name="top-level pass" classname="" time="0.000007" file="__grader__/mixed.test.ts" line="12" assertions="1" />
+  </testsuite>
+</testsuites>

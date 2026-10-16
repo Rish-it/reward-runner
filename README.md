@@ -3,8 +3,9 @@
 Turn hidden test results from any test runner into a [Harbor](https://harborframework.com) verifier
 reward, safely.
 
-> **Status: planning.** No code yet. This repo holds the research, decisions and plan, so a contributor or a
-> coding agent can pick it up cold.
+> **Status: M1 (Bun MVP) works; hardening (M2) has not started.** It grades correctly, but it does not yet
+> defend against an agent that games the tests (planted `bunfig.toml` preloads, environment injection,
+> patched dependencies, forged reports). Don't rely on it for adversarial evals until M2 lands.
 
 ## The problem
 
@@ -32,6 +33,16 @@ A single static binary you drop into `tests/`:
   patched dependencies, forged reports.
 
 Bun first; pytest, Vitest and a generic JUnit `--cmd` mode follow when needed.
+
+## Try it
+
+```bash
+scripts/verify.sh    # unit tests, Linux builds into examples/bun-basic/tests/, matrix in oven/bun (needs Go, Docker)
+harbor run -p examples/bun-basic -a oracle    # expect reward 1
+harbor run -p examples/bun-basic -a nop       # expect reward 0
+```
+
+`grade -h` lists the flags; [docs/04-plan.md](docs/04-plan.md) has the full CLI, scoring and output formats.
 
 ## Read in this order
 
