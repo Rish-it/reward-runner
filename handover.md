@@ -8,19 +8,20 @@ Current state and next steps for whoever picks this up next (you, Claude Code or
 | Milestone | State |
 |---|---|
 | M0: research, decisions, plan | Done (on `main`) |
-| M1: Bun MVP | Done (branch `m1-bun-mvp`, not merged into `main` yet) |
+| M1: Bun MVP | Done (merged into `main` via PR #1) |
 | M2: Bun hardening T1–T8 + README threat model | **Next.** Not started |
 | M3: release | Later; needs the owner's OK |
 
-Remote: https://github.com/Rish-it/reward-runner. Branch `m1-bun-mvp` holds all M1 work:
+Remote: https://github.com/Rish-it/reward-runner. `main` holds all M1 work (PR #1 merged branch `m1-bun-mvp`):
 
 | Commit | What |
 |---|---|
-| `6e8e64d` (`main`) | Research, decisions and core plan |
+| `6e8e64d` | Research, decisions and core plan |
 | `dc47847` | M1: `grade` CLI, bun adapter, example task, verification matrix |
 | `d063a99` | M1 marked done after the real Harbor run |
 | `d9c8371` | M1 results and Harbor facts written into the docs |
-| (this commit) | This handover file |
+| `109eea8` | This handover file |
+| `fc8a9cf` (`main`) | Merge of PR #1 |
 
 ## What happened so far
 
@@ -119,13 +120,13 @@ From `AGENTS.md` (Codex reads it directly; Claude Code reads it through `CLAUDE.
 
 ## Pending for the owner
 
-- Merge `m1-bun-mvp` into `main` (or open a PR), then branch M2 from it, e.g. `m2-hardening`.
+- Nothing. M1 is merged into `main`; branch M2 from `main`, e.g. `m2-hardening`.
 
 ## Starting prompt for the next session
 
 ```
 Read handover.md, then AGENTS.md and docs/01–04 in order. Start M2 (Bun hardening) on a new branch
-m2-hardening from m1-bun-mvp. Begin with T1 (planted bunfig.toml preload): write the malicious fixture
+m2-hardening from main. Begin with T1 (planted bunfig.toml preload): write the malicious fixture
 under testdata/malicious/, show whether it raises the reward in oven/bun:1.3.14, then mitigate and add a
 check to scripts/verify.sh. Follow AGENTS.md; ask before adding dependencies. Update handover.md before
 you stop.
