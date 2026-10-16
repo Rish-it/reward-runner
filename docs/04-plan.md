@@ -172,7 +172,7 @@ Standard library only. Ask before adding any dependency.
 | | Scope | Done when |
 |---|---|---|
 | M0 | Research, decisions, plan (this repo) | Done |
-| M1 | Bun MVP: CLI, bun adapter, binary + partial modes, `metrics.json`, fail-loud validation, timeout, example task | Verification matrix passes in `oven/bun`, plus a real Harbor oracle/nop run. **Matrix passes in `oven/bun:1.3.14` (arm64 and amd64); real `harbor run` still to do** (Harbor wasn't installed) |
+| M1 | Bun MVP: CLI, bun adapter, binary + partial modes, `metrics.json`, fail-loud validation, timeout, example task | Verification matrix passes in `oven/bun`, plus a real Harbor oracle/nop run. Done: matrix passes in `oven/bun:1.3.14` (arm64 and amd64); `harbor run` (Harbor 0.24.0, docker, arm64) gives oracle 1.0, nop 0 |
 | M2 | Bun hardening T1–T8 and a README threat model | Every malicious fixture behaves as documented |
 | M3 | Release: binaries for linux amd64/arm64 (+ darwin for local dev), copy-paste `test.sh` snippets | Ask the owner before creating a release |
 | M4 | pytest, vitest and generic `--cmd` (only when a task needs them) | Matrix passes in each runner's image |
