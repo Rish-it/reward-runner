@@ -1,0 +1,19 @@
+docs/04-plan.md
+  s_9191b01853aa78::t_5daff1b0d0d630 175
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d063a99d673d2170edd406edb9f6f3b95ca22868",
+  "prompts": {},
+  "sessions": {
+    "s_9191b01853aa78": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e7201550-5180-4799-a25d-ad07fb47a4e9",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Rishit Sharma <rishitsharmar89@gmail.com>"
+    }
+  }
+}
