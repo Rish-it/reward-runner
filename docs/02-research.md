@@ -114,7 +114,24 @@ New in the Docker re-check:
 
 The first pass was a throwaway TypeScript prototype (deleted); the Docker re-check is scripted in
 `scripts/verify.sh` (matrix) plus one-off probes. Harbor facts come from `src/harbor/verifier/verifier.py`
-and the Harbor docs.
+and the Harbor docs, and the ones below were confirmed by a real run.
+
+### Harbor 0.24.0, real run (2026-10-16)
+
+`harbor run -p examples/bun-basic` with the `oracle` and `nop` agents (installed via `uv tool install harbor`,
+default `docker` environment, arm64 host):
+
+- A `task.toml` with `schema_version = "1.4"`, `[metadata]`, and timeouts in `[verifier]`, `[agent]` and
+  `[environment]` is accepted.
+- `tests/test.sh` runs in the Dockerfile `WORKDIR` (`/app`) with `tests/` at `/tests`. `uname -m` in
+  `oven/bun:1.3.14` on an arm64 host is `aarch64`, so `grade-$(uname -m)` picks `grade-aarch64`.
+  (`test.sh` runs `chmod +x` first, so whether Harbor keeps the exec bits wasn't tested.)
+- The trial's reward is `reward.json` as written (`result.json` → `verifier_result.rewards = {"reward": 1}`).
+- Harbor copies the whole `/logs/verifier/` into the trial's `verifier/` folder (`reward.json`,
+  `metrics.json`, `junit/`, and `test-stdout.txt` with `test.sh`'s output). The extra files don't affect the
+  reward.
+- The `oracle` agent runs `solution/solve.sh`; the `nop` agent leaves the environment untouched.
+- Results stay local (`jobs/` by default); uploading to Harbor Hub needs an explicit `--upload`.
 
 ## Corrections log
 

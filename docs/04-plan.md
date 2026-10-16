@@ -178,6 +178,36 @@ Standard library only. Ask before adding any dependency.
 | M4 | pytest, vitest and generic `--cmd` (only when a task needs them) | Matrix passes in each runner's image |
 | Later | jest, go, nextest, deno, node:test; CTRF input; Rewardkit criterion | As needed |
 
+## M1 results (2026-10-16)
+
+**Shipped** (branch `m1-bun-mvp`): the `grade` CLI with the `bun` adapter, `binary` and `partial` modes,
+`reward.json` + `metrics.json` + `junit/`, fail-loud validation (D7), fail-closed reward, per-file timeout with
+a process-group kill, the `examples/bun-basic` Harbor task, and `scripts/verify.sh`. Go standard library only.
+Small choices the plan text didn't spell out are folded into the sections above: stale outputs removed first,
+partial reward capped at 0.9999, inconsistent JUnit totals treated as unusable, the group killed after every
+file, `exit_code` in `metrics.json`.
+
+**Verified:**
+
+- `go vet` and `go test ./...` (JUnit parsing on a captured Bun report, scoring, weights, process-group kill).
+- The 23-check matrix in `oven/bun:1.3.14` on linux/arm64 and linux/amd64 (emulated), then twice more from
+  clean clones. A mutation check (killing only the group leader) fails both the unit test and the Docker check.
+- First real Harbor run, after `scripts/verify.sh` built the binaries. Harbor 0.24.0, `docker` environment,
+  arm64 host, so `grade-aarch64` ran:
+
+| Command | Reward | Verifier output |
+|---|---|---|
+| `harbor run -p examples/bun-basic -a oracle` | **1** | mean 2/2, median 4/4; 0 exceptions; verifier step 0.3 s, trial 6 s |
+| `harbor run -p examples/bun-basic -a nop` | **0** | mean 1/2 (empty input returns NaN), median `load_failed` (export missing); weighted fraction 0.25 |
+
+No fixes were needed for the Harbor run: Harbor accepted `task.toml` (schema 1.4), `tests/test.sh` and the
+binaries as they were. Harbor facts confirmed by the run are in
+[02-research.md](02-research.md#harbor-0240-real-run-2026-10-16).
+
+**Carried to M2:** hardening T1–T8 (nothing above defends against a hostile agent yet); whether Harbor accepts
+the extra per-file keys in a partial-mode `reward.json` (only binary mode has run under Harbor); `__grader__/`
+sits in the agent-writable app directory (T1).
+
 ## Open questions
 
 - Should the unprivileged-user mode (T7) be on by default, or opt-in?

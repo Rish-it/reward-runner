@@ -3,9 +3,11 @@
 Turn hidden test results from any test runner into a [Harbor](https://harborframework.com) verifier
 reward, safely.
 
-> **Status: M1 (Bun MVP) works; hardening (M2) has not started.** It grades correctly, but it does not yet
-> defend against an agent that games the tests (planted `bunfig.toml` preloads, environment injection,
-> patched dependencies, forged reports). Don't rely on it for adversarial evals until M2 lands.
+> **Status: M1 (Bun MVP) is done; hardening (M2) has not started.** A real `harbor run` of
+> `examples/bun-basic` scores the oracle 1 and the nop agent 0 ([M1 results](docs/04-plan.md#m1-results-2026-10-16)).
+> It grades correctly, but it does not yet defend against an agent that games the tests (planted
+> `bunfig.toml` preloads, environment injection, patched dependencies, forged reports). Don't rely on it for
+> adversarial evals until M2 lands.
 
 ## The problem
 
